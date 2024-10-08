@@ -34,7 +34,7 @@ export default function Navbar() {
         const state = JSON.parse(stateString);
         const _accountMap = JSON.parse(decryptMessage(state));
         setAccounts(_accountMap);
-        if (Object.keys(_accountMap).length > 0) {
+        if ((Object.keys(_accountMap)?.length || 0) > 0) {
           router.push(`/${params.accountId || Object.keys(_accountMap)[0]}`);
         }
       }

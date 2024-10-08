@@ -42,10 +42,12 @@ export default function CopyPhrases({ selectedNetwork, newWallet }: Props) {
     if (!mnemonic || !selectedNetwork) {
       return;
     }
-    if (mnemonic.filter((w) => w.trim() !== "").join(" ").length < 12) {
+    if ((mnemonic.filter((w) => w.trim() !== "")?.length || 0) < 12) {
       return;
     }
-    const seed = mnemonicToSeedSync(mnemonic.join(" ")).toString("hex");
+    const seed = mnemonicToSeedSync(
+      mnemonic.filter((w) => w.trim() !== "").join(" ")
+    ).toString("hex");
     localStorage.setItem("seed", JSON.stringify(encryptMessage(seed)));
     const accountId = crypto.randomUUID();
     const updatedAccounts = _createWallet(
