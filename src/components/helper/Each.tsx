@@ -6,6 +6,6 @@ type EachProps<T> = {
 };
 
 const Each = <T,>({ render, of }: EachProps<T>): any =>
-  Children.toArray((of || []).map((item, index) => render(item, index))) || [];
+  Children.toArray(of.map((item, index) => render(item, index)));
 
 export default Each;

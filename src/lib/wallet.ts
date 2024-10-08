@@ -1,8 +1,30 @@
-import { mnemonicToSeedSync } from "bip39";
 import { decryptMessage, encryptMessage } from "./bcrypt";
 import { derivePath } from "ed25519-hd-key";
 import nacl from "tweetnacl";
 import { Keypair } from "@solana/web3.js";
+
+export const _networks: { [key: string]: { title: string; image: string } } = {
+  "501": {
+    title: "Solana",
+    image:
+      "https://s3.amazonaws.com/app-assets.xnfts.dev/images/network-logo-replacement-solana.png",
+  },
+  "966": {
+    //
+    title: "Polygon",
+    image: "https://assets.coingecko.com/coins/images/4713/large/polygon.png",
+  },
+  "60": {
+    title: "Ethereum",
+    image:
+      "https://assets.coingecko.com/asset_platforms/images/279/large/ethereum.png",
+  },
+  // "0": {
+  //   //
+  //   title: "Polygon",
+  //   image: "https://assets.coingecko.com/coins/images/4713/large/polygon.png",
+  // },
+};
 
 export function _createWallet(
   seed: string,
@@ -12,43 +34,45 @@ export function _createWallet(
 ) {
   let walletNumber = 0;
   const state = localStorage.getItem("state");
-  let wallets: null | { [key: string]: Account } = null;
+  let accounts: null | { [key: string]: Account } = null;
   if (state) {
     const payload = decryptMessage(JSON.parse(state));
-    if (Array.isArray(JSON.parse(payload))) {
-      wallets = JSON.parse(payload).wallets;
-      walletNumber =
-        JSON.parse(payload || "{}").accounts?.[accountId]?.wallets?.[
-          selectedNetwork
-        ]?.length?.toString() || 0;
+    if (payload) {
+      accounts = JSON.parse(payload);
+      if (accounts) {
+        walletNumber =
+          accounts[accountId]?.wallets?.[selectedNetwork]?.length || 0;
+      }
     }
   }
   const path = `m/44'/${selectedNetwork}'/${walletNumber}'/0'`;
   const derivedSeed = derivePath(path, seed).key;
   const secret = nacl.sign.keyPair.fromSeed(derivedSeed).secretKey;
+
   const publicKey = Keypair.fromSecretKey(secret).publicKey.toBase58();
 
-  const updatedWallets: { [key: string]: Account } = JSON.parse(
-    JSON.stringify(wallets || {})
+  const updatedAccounts: { [key: string]: Account } = JSON.parse(
+    JSON.stringify(accounts || {})
   );
-  if (!updatedWallets[accountId]) {
-    updatedWallets[accountId] = {
+  if (!updatedAccounts[accountId]) {
+    updatedAccounts[accountId] = {
       title: accountTitle,
       wallets: {},
     };
   }
 
-  if (!updatedWallets[accountId].wallets[selectedNetwork]) {
-    updatedWallets[accountId].wallets[selectedNetwork] = [];
+  if (!updatedAccounts[accountId].wallets[selectedNetwork]) {
+    updatedAccounts[accountId].wallets[selectedNetwork] = [];
   }
 
-  updatedWallets[accountId].wallets[selectedNetwork][walletNumber] = {
+  updatedAccounts[accountId].wallets[selectedNetwork][walletNumber] = {
     publicKey,
     secret,
   };
 
-  const encryptedState = encryptMessage(JSON.stringify(updatedWallets));
+  const encryptedState = encryptMessage(JSON.stringify(updatedAccounts));
   localStorage.setItem("state", JSON.stringify(encryptedState));
 
-  return updatedWallets;
+  console.log(updatedAccounts);
+  return updatedAccounts;
 }

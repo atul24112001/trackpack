@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from "react";
-import nacl from "tweetnacl";
 import { generateMnemonic, mnemonicToSeedSync } from "bip39";
-import { derivePath } from "ed25519-hd-key";
-import { Keypair } from "@solana/web3.js";
 import { useRouter } from "next/navigation";
 
 import startCase from "lodash/startCase";
-import Button from "@/components/ui/Button";
-import { decryptMessage, encryptMessage } from "@/lib/bcrypt";
+import Button from "@/components/local-ui/Button";
+import { encryptMessage } from "@/lib/bcrypt";
 import Each from "@/components/helper/Each";
 import { _createWallet } from "@/lib/wallet";
+import { _copyToClipBoard } from "@/lib/utils";
+import { useSetRecoilState } from "recoil";
+import { accountState } from "@/store/atom/accounts";
 
 export default function CopyPhrases({ selectedNetwork, newWallet }: Props) {
   const [mnemonic, setMnemonic] = useState<string[] | null>(null);
   const [copied, setCopied] = useState(false);
+  const setAccounts = useSetRecoilState(accountState);
 
   const router = useRouter();
 
@@ -23,7 +24,7 @@ export default function CopyPhrases({ selectedNetwork, newWallet }: Props) {
         const generatedMnemonics = generateMnemonic();
         setMnemonic(generatedMnemonics.split(" "));
       } else {
-        setMnemonic(Array(15).fill(""));
+        setMnemonic(Array(12).fill(""));
       }
     }
   }, []);
@@ -44,27 +45,26 @@ export default function CopyPhrases({ selectedNetwork, newWallet }: Props) {
     if (mnemonic.filter((w) => w.trim() !== "").join(" ").length < 12) {
       return;
     }
-    const seed = mnemonicToSeedSync(mnemonic.join(" "));
+    const seed = mnemonicToSeedSync(mnemonic.join(" ")).toString("hex");
+    localStorage.setItem("seed", JSON.stringify(encryptMessage(seed)));
     const accountId = crypto.randomUUID();
-    _createWallet(
-      seed.toString("hex"),
+    const updatedAccounts = _createWallet(
+      seed,
       selectedNetwork,
       accountId,
       "Account " + accountId
     );
-    router.replace("/");
+    setAccounts(updatedAccounts);
+    router.push(`/${accountId}`);
   };
 
   const copyToClipboard = async () => {
     if (!mnemonic) {
       return;
     }
-    try {
-      await navigator.clipboard.writeText(mnemonic.join(" "));
+    _copyToClipBoard(mnemonic.join(" "), () => {
       setCopied(true);
-    } catch (err) {
-      console.error("Failed to copy: ", err);
-    }
+    });
   };
 
   return (

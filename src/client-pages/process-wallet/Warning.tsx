@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { LockKeyhole, TriangleAlert } from "lucide-react";
-import Button from "@/components/ui/Button";
+import Button from "@/components/local-ui/Button";
 
 export default function CreateWalletWarning({ onNext }: Props) {
   const [agreesTerms, setAgreesTerms] = useState(false);

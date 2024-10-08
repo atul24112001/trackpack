@@ -1,13 +1,14 @@
 "use client";
 
-import Button from "@/components/ui/Button";
-import IconButton from "@/components/ui/IconButton";
+import Button from "@/components/local-ui/Button";
+import IconButton from "@/components/local-ui/IconButton";
 import { authState } from "@/store/atom/auth";
 import { Eye, EyeOff } from "lucide-react";
 import { PropsWithChildren, useLayoutEffect, useState } from "react";
 import { useRecoilState } from "recoil";
 import crypto from "crypto";
 import { decryptMessage, encryptMessage } from "@/lib/bcrypt";
+import Navbar from "../navbar";
 
 export default function Authentication({ children }: PropsWithChildren) {
   const [isAuthenticated, setIsAuthenticated] = useRecoilState(authState);
@@ -86,7 +87,10 @@ export default function Authentication({ children }: PropsWithChildren) {
   };
 
   return isAuthenticated ? (
-    <> {children}</>
+    <>
+      <Navbar />
+      {children}
+    </>
   ) : (
     <div className="h-screen flex  justify-center items-center">
       <div className=" w-[90%] md:w-[50%] lg:w-[30%]">
@@ -94,7 +98,7 @@ export default function Authentication({ children }: PropsWithChildren) {
           Welcome to Trackpack
         </h1>
         <p className="text-center text-foreground-secondary  mb-10 font-semibold">
-          Let's get started.
+          Let&apos;s get started.
         </p>
         <div className="flex items-center justify-between mb-4 px-4 py-2 bg-background-secondary rounded-lg">
           <input
