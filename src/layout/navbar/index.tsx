@@ -46,37 +46,19 @@ export default function Navbar() {
         setAccounts(_accountMap);
         setActiveBlockchain(targetNetwork || "501");
         // setActiveWallet(localStorage.getItem("active-wallet"));
-      }
-    }
-  }, []);
+        if ((Object.keys(_accountMap)?.length || 0) > 0) {
+          const newActiveAccount =
+            params.accountId ||
+            localStorage.getItem("activeAccount") ||
+            Object.keys(_accountMap)[0];
 
-  useEffect(() => {
-    if (accounts && activeBlockchain) {
-      if ((Object.keys(accounts)?.length || 0) > 0) {
-        const newActiveAccount =
-          params.accountId ||
-          localStorage.getItem("activeAccount") ||
-          Object.keys(accounts)[0];
-
-        if (typeof newActiveAccount == "string") {
-          router.push(`/${newActiveAccount}`);
+          if (typeof newActiveAccount == "string") {
+            router.push(`/${newActiveAccount}`);
+          }
         }
       }
     }
-  }, [accounts, params.accountId]);
-
-  useEffect(() => {
-    if (accounts && activeBlockchain) {
-      const newActiveWallet =
-        accounts[localStorage.getItem("activeAccount") || ""]?.wallets?.[
-          activeBlockchain
-        ]?.[0]?.publicKey;
-      if (newActiveWallet) {
-        localStorage.setItem("active-wallet", newActiveWallet);
-        setActiveWallet(newActiveWallet);
-      }
-    }
-  }, [activeBlockchain]);
+  }, []);
 
   const activeAccountId = useMemo(() => {
     if (typeof params.accountId === "string") {
