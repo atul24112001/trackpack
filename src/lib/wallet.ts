@@ -1,33 +1,18 @@
+import { generateMnemonic, mnemonicToSeedSync } from "bip39";
 import { decryptMessage, encryptMessage } from "./bcrypt";
-import { derivePath } from "ed25519-hd-key";
-import nacl from "tweetnacl";
-import { Keypair } from "@solana/web3.js";
+import EthereumNetwork from "./generator/ethereum";
+import SolanaNetwork from "./generator/solana";
 
-export const _networks: { [key: string]: { title: string; image: string } } = {
-  "501": {
-    title: "Solana",
-    image:
-      "https://s3.amazonaws.com/app-assets.xnfts.dev/images/network-logo-replacement-solana.png",
-  },
-  "966": {
-    //
-    title: "Polygon",
-    image: "https://assets.coingecko.com/coins/images/4713/large/polygon.png",
-  },
-  "60": {
-    title: "Ethereum",
-    image:
-      "https://assets.coingecko.com/asset_platforms/images/279/large/ethereum.png",
-  },
-  // "0": {
-  //   //
+export const _networks: { [key: string]: Network } = {
+  "501": SolanaNetwork,
+  // "966": {
   //   title: "Polygon",
   //   image: "https://assets.coingecko.com/coins/images/4713/large/polygon.png",
   // },
+  "60": EthereumNetwork,
 };
 
 export function _createWallet(
-  seed: string,
   selectedNetwork: string,
   accountId: string,
   accountTitle: string
@@ -46,10 +31,8 @@ export function _createWallet(
     }
   }
   const path = `m/44'/${selectedNetwork}'/${walletNumber}'/0'`;
-  const derivedSeed = derivePath(path, seed).key;
-  const secret = nacl.sign.keyPair.fromSeed(derivedSeed).secretKey;
-
-  const publicKey = Keypair.fromSecretKey(secret).publicKey.toBase58();
+  const network = _networks[selectedNetwork];
+  const { publicKey, secret } = network.generateWallet(path);
 
   const updatedAccounts: { [key: string]: Account } = JSON.parse(
     JSON.stringify(accounts || {})
@@ -72,7 +55,17 @@ export function _createWallet(
 
   const encryptedState = encryptMessage(JSON.stringify(updatedAccounts));
   localStorage.setItem("state", JSON.stringify(encryptedState));
-
-  console.log(updatedAccounts);
+  localStorage.setItem("network", selectedNetwork);
   return updatedAccounts;
 }
+
+export const getSeed = () => {
+  const mnemonicExists = localStorage.getItem("mnemonic");
+  const mnemonic = mnemonicExists
+    ? decryptMessage(JSON.parse(mnemonicExists))
+    : generateMnemonic();
+
+  console.log({ mnemonic });
+  const seed = mnemonicToSeedSync(mnemonic);
+  return seed;
+};

@@ -1,29 +1,38 @@
 "use client";
 
 import Each from "@/components/helper/Each";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import LocalAvatar from "@/components/helper/Avatar";
-import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { getInitials } from "@/lib/helper";
-import { accountState } from "@/store/atom/accounts";
-import { Check, Plus } from "lucide-react";
-import React, { useEffect, useMemo } from "react";
+  accountState,
+  activeBlockchainState,
+  activeWalletState,
+} from "@/store/atom/accounts";
+import { Check, ChevronDown, Copy, CopyCheck } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRecoilState } from "recoil";
 
-import { _createWallet, _networks } from "@/lib/wallet";
+import { _networks } from "@/lib/wallet";
 import { decryptMessage } from "@/lib/bcrypt";
 import { useParams, useRouter } from "next/navigation";
+import {
+  Menubar,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarTrigger,
+  MenubarSeparator,
+} from "@/components/ui/menubar";
+// import { MenubarTrigger } from "@radix-ui/react-menubar";
+import NavbarLeading from "./Leading";
+import NavbarEnding from "./Ending";
 
 export default function Navbar() {
+  const [copied, setCopied] = useState(false);
   const [accounts, setAccounts] = useRecoilState(accountState);
+  const [activeBlockchain, setActiveBlockchain] = useRecoilState(
+    activeBlockchainState
+  );
+  const [activeWallet, setActiveWallet] = useRecoilState(activeWalletState);
+
   const params = useParams();
   const router = useRouter();
 
@@ -33,13 +42,41 @@ export default function Navbar() {
       if (stateString) {
         const state = JSON.parse(stateString);
         const _accountMap = JSON.parse(decryptMessage(state));
+        const targetNetwork = localStorage.getItem("network");
         setAccounts(_accountMap);
-        if ((Object.keys(_accountMap)?.length || 0) > 0) {
-          router.push(`/${params.accountId || Object.keys(_accountMap)[0]}`);
+        setActiveBlockchain(targetNetwork || "501");
+        // setActiveWallet(localStorage.getItem("active-wallet"));
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (accounts && activeBlockchain) {
+      if ((Object.keys(accounts)?.length || 0) > 0) {
+        const newActiveAccount =
+          params.accountId ||
+          localStorage.getItem("activeAccount") ||
+          Object.keys(accounts)[0];
+
+        if (typeof newActiveAccount == "string") {
+          router.push(`/${newActiveAccount}`);
         }
       }
     }
-  }, [params.accountId]);
+  }, [accounts, params.accountId]);
+
+  useEffect(() => {
+    if (accounts && activeBlockchain) {
+      const newActiveWallet =
+        accounts[localStorage.getItem("activeAccount") || ""]?.wallets?.[
+          activeBlockchain
+        ]?.[0]?.publicKey;
+      if (newActiveWallet) {
+        localStorage.setItem("active-wallet", newActiveWallet);
+        setActiveWallet(newActiveWallet);
+      }
+    }
+  }, [activeBlockchain]);
 
   const activeAccountId = useMemo(() => {
     if (typeof params.accountId === "string") {
@@ -52,26 +89,18 @@ export default function Navbar() {
     return accounts?.[activeAccountId || ""] || null;
   }, [accounts, activeAccountId]);
 
-  const createWallet = (selectedNetwork: string) => {
-    if (!activeAccount || !activeAccountId) {
+  const changeNetworkHandler = (item: string) => {
+    if (!accounts || !activeAccountId) {
       return;
     }
-
-    if (activeAccount.wallets[selectedNetwork]) {
-      return;
+    setActiveBlockchain(item);
+    const newActiveWallet =
+      accounts[activeAccountId].wallets[item]?.[0].publicKey;
+    if (newActiveWallet) {
+      setActiveWallet(newActiveWallet);
+      localStorage.setItem("active-wallet", newActiveWallet);
     }
-
-    const encryptedSeed = JSON.parse(localStorage.getItem("seed") || "");
-    if (encryptedSeed) {
-      const seed = decryptMessage(encryptedSeed);
-      const updatedAccounts = _createWallet(
-        seed,
-        selectedNetwork,
-        activeAccountId,
-        activeAccount.title
-      );
-      setAccounts(updatedAccounts);
-    }
+    localStorage.setItem("network", item);
   };
 
   if (!activeAccount) {
@@ -80,115 +109,111 @@ export default function Navbar() {
 
   return (
     <div className="w-[90%] mt-5 mx-auto flex justify-between items-center">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Avatar>
-            <AvatarFallback>
-              {getInitials(activeAccount.title, 2)}
-            </AvatarFallback>
-          </Avatar>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-56">
-          <DropdownMenuGroup>
+      <NavbarLeading
+        activeAccount={activeAccount}
+        activeAccountId={activeAccountId}
+      />
+      <Menubar className="px-1 py-0 rounded-full">
+        <MenubarMenu>
+          <MenubarTrigger className="flex items-center rounded-tl-full rounded-bl-full">
+            <ChevronDown size={20} />
+            {activeBlockchain && _networks[activeBlockchain] && (
+              <img
+                className="w-5 h-5"
+                alt="active_blockchain"
+                src={_networks[activeBlockchain].image}
+              />
+            )}
+          </MenubarTrigger>
+          <MenubarContent>
             <Each
-              of={Object.keys(accounts || {})}
+              of={Object.keys(_networks)}
               render={(item) => {
+                const network = _networks[item];
                 return (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      router.push(`/${item}`);
-                    }}
-                  >
-                    <LocalAvatar
-                      title={getInitials(accounts?.[item].title || "", 2)}
-                    />
+                  <MenubarItem onClick={() => changeNetworkHandler(item)}>
+                    <img className="w-6 h-6" alt={item} src={network.image} />
                     <p
                       style={{
                         textOverflow: "ellipsis",
                         margin: "0 12px",
+                        width: "80px",
                         flex: 1,
                       }}
                     >
-                      {accounts?.[item].title.substring(0, 14)}...
+                      {network.title}
                     </p>
-                    {activeAccountId === item && (
+                    {item === activeBlockchain && (
                       <Check size={18} color="royalblue" />
                     )}
-                  </DropdownMenuItem>
+                  </MenubarItem>
                 );
               }}
             />
-            <DropdownMenuItem
-              onClick={() => {
-                router.push("/");
-              }}
-              style={{
-                flex: 1,
-                gap: 3,
-                justifyContent: "start",
-                padding: "8px 8px",
-              }}
-            >
-              <Plus width={18} /> Add Account
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => {}} style={{ flex: 1, gap: 3 }}>
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                localStorage.removeItem("security-deadline");
-                window.location.href = "/";
-                window.location.reload();
-              }}
-              style={{ flex: 1, gap: 3 }}
-            >
-              Lock
-            </DropdownMenuItem>
-            {/* <DropdownMenuSeparator /> */}
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      {/* <div>Center</div> */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button className="gap-1" size="sm" variant="default">
-            <Plus size={16} /> Add Wallet
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <Each
-            of={Object.keys(_networks)}
-            render={(item) => {
-              const network = _networks[item];
-              return (
-                <DropdownMenuItem
-                  onClick={() => {
-                    createWallet(item);
-                  }}
-                >
-                  <img className="w-6 h-6" alt={item} src={network.image} />
-                  <p
-                    style={{
-                      textOverflow: "ellipsis",
-                      margin: "0 12px",
-                      width: "80px",
-                      flex: 1,
-                    }}
-                  >
-                    {network.title}
-                  </p>
-                  {(activeAccount.wallets[item]?.length || 0) > 0 && (
-                    <Check size={18} color="royalblue" />
-                  )}
-                </DropdownMenuItem>
-              );
+          </MenubarContent>
+        </MenubarMenu>
+        <MenubarSeparator className="w-[2px] bg-background-secondary h-full" />
+        <MenubarMenu>
+          <MenubarTrigger className="">
+            <p className="ml-1 px-1">
+              {activeWallet?.substring(0, 4)}...{activeWallet?.substring(40)}
+            </p>
+          </MenubarTrigger>
+          {activeBlockchain && (
+            <MenubarContent>
+              <Each
+                of={activeAccount.wallets[activeBlockchain]}
+                render={(item) => {
+                  return (
+                    <MenubarItem className="gap-2">
+                      <p
+                        onClick={() => {
+                          setActiveWallet(item.publicKey);
+                          localStorage.setItem("active-wallet", item.publicKey);
+                        }}
+                        className="text-ellipsis flex-1 "
+                      >
+                        {item.publicKey.substring(0, 4)}...{" "}
+                        {item.publicKey.substring(40)}
+                      </p>
+                      {item.publicKey === activeWallet && (
+                        <Check size={18} color="royalblue" />
+                      )}
+                      <Copy
+                        onClick={() => {
+                          window.navigator.clipboard.writeText(item.publicKey);
+                        }}
+                        size={14}
+                      />
+                    </MenubarItem>
+                  );
+                }}
+              />
+            </MenubarContent>
+          )}
+        </MenubarMenu>
+        <MenubarSeparator className="w-[2px] bg-background-secondary h-full" />
+        <MenubarMenu>
+          <MenubarTrigger
+            onClick={() => {
+              window.navigator.clipboard.writeText(activeWallet || "");
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
             }}
-          />
-        </DropdownMenuContent>
-      </DropdownMenu>
+            className="rounded-tr-full rounded-br-full"
+          >
+            {copied ? (
+              <CopyCheck size={16} className="text-green-500" />
+            ) : (
+              <Copy size={16} />
+            )}
+          </MenubarTrigger>
+        </MenubarMenu>
+      </Menubar>
+      <NavbarEnding
+        activeAccount={activeAccount}
+        activeAccountId={activeAccountId}
+      />
     </div>
   );
 }

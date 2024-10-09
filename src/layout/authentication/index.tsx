@@ -4,7 +4,7 @@ import Button from "@/components/local-ui/Button";
 import IconButton from "@/components/local-ui/IconButton";
 import { authState } from "@/store/atom/auth";
 import { Eye, EyeOff } from "lucide-react";
-import { PropsWithChildren, useLayoutEffect, useState } from "react";
+import { PropsWithChildren, useEffect, useLayoutEffect, useState } from "react";
 import { useRecoilState } from "recoil";
 import crypto from "crypto";
 import { decryptMessage, encryptMessage } from "@/lib/bcrypt";
@@ -22,6 +22,15 @@ export default function Authentication({ children }: PropsWithChildren) {
     password: "",
     confirmPassword: "",
   });
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      document.addEventListener("keypress", checkPassword);
+      return () => {
+        document.removeEventListener("keypress", checkPassword);
+      };
+    }
+  }, [isAuthenticated]);
 
   useLayoutEffect(() => {
     const security = localStorage.getItem("security");

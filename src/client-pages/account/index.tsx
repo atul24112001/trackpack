@@ -2,46 +2,54 @@
 
 import Each from "@/components/helper/Each";
 import { _networks } from "@/lib/wallet";
-import { accountState } from "@/store/atom/accounts";
-import React, { useMemo } from "react";
+import { accountState, activeBlockchainState } from "@/store/atom/accounts";
+import React, { useLayoutEffect, useMemo } from "react";
 import { useRecoilValue } from "recoil";
-import bs58 from "bs58";
 import Wallet from "./Wallet";
 import { useRouter } from "next/navigation";
 
 export default function Account({ activeAccountId }: Props) {
   const accounts = useRecoilValue(accountState);
+  const activeBlockchain = useRecoilValue(activeBlockchainState);
   const router = useRouter();
 
   const activeAccount = useMemo(() => {
     return accounts?.[activeAccountId || ""] || null;
   }, [accounts, activeAccountId]);
 
-  if (!activeAccount) {
-    router.push("/");
-    return;
+  useLayoutEffect(() => {
+    if (!activeAccount || !activeBlockchain) {
+      router.push("/");
+    }
+  }, [activeAccount, activeBlockchain]);
+
+  const walletLength =
+    activeAccount?.wallets[activeBlockchain || ""]?.length || 0;
+
+  if (!activeAccount || !activeBlockchain) {
+    return null;
   }
 
   return (
     <div className="w-[90%] mt-5 mx-auto">
-      <Each
-        of={Object.keys(activeAccount.wallets)}
-        render={(item) => {
-          const wallet = activeAccount.wallets[item];
-          const network = _networks[item];
-          const secret = bs58.encode(
-            new Uint8Array(Object.values(wallet[0].secret))
-          );
-          return (
-            <Wallet
-              item={item}
-              network={network}
-              publicKey={wallet[0].publicKey}
-              secret={secret}
-            />
-          );
-        }}
-      />
+      {walletLength === 0 && <p className="text-center opacity-75">No data</p>}
+
+      {walletLength !== 0 && (
+        <Each
+          of={activeAccount.wallets[activeBlockchain]}
+          render={(wallet) => {
+            const network = _networks[activeBlockchain];
+            return (
+              <Wallet
+                item={activeBlockchain}
+                network={network}
+                publicKey={wallet.publicKey}
+                secret={wallet.secret}
+              />
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

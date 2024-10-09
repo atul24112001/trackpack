@@ -1,5 +1,5 @@
 type Wallet = {
-  secret: Uint8Array;
+  secret: string;
   publicKey: string;
 };
 
@@ -8,4 +8,10 @@ type Account = {
   wallets: {
     [key: string]: Wallet[];
   };
+};
+
+type Network = {
+  title: string;
+  image: string;
+  generateWallet: (path: string) => Wallet;
 };

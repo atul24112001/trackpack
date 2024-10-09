@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { generateMnemonic, mnemonicToSeedSync } from "bip39";
+import { generateMnemonic } from "bip39";
 import { useRouter } from "next/navigation";
 
 import startCase from "lodash/startCase";
@@ -9,12 +9,13 @@ import Each from "@/components/helper/Each";
 import { _createWallet } from "@/lib/wallet";
 import { _copyToClipBoard } from "@/lib/utils";
 import { useSetRecoilState } from "recoil";
-import { accountState } from "@/store/atom/accounts";
+import { accountState, activeBlockchainState } from "@/store/atom/accounts";
 
 export default function CopyPhrases({ selectedNetwork, newWallet }: Props) {
   const [mnemonic, setMnemonic] = useState<string[] | null>(null);
   const [copied, setCopied] = useState(false);
   const setAccounts = useSetRecoilState(accountState);
+  const setActiveBlockchain = useSetRecoilState(activeBlockchainState);
 
   const router = useRouter();
 
@@ -45,19 +46,24 @@ export default function CopyPhrases({ selectedNetwork, newWallet }: Props) {
     if ((mnemonic.filter((w) => w.trim() !== "")?.length || 0) < 12) {
       return;
     }
-    const seed = mnemonicToSeedSync(
-      mnemonic.filter((w) => w.trim() !== "").join(" ")
-    ).toString("hex");
-    localStorage.setItem("seed", JSON.stringify(encryptMessage(seed)));
+
+    localStorage.setItem(
+      "mnemonic",
+      JSON.stringify(
+        encryptMessage(mnemonic.filter((w) => w.trim() !== "").join(" "))
+      )
+    );
     const accountId = crypto.randomUUID();
     const updatedAccounts = _createWallet(
-      seed,
       selectedNetwork,
       accountId,
       "Account " + accountId
     );
     setAccounts(updatedAccounts);
-    router.push(`/${accountId}`);
+    setActiveBlockchain(selectedNetwork);
+    setTimeout(() => {
+      router.push(`/${accountId}`);
+    }, 200);
   };
 
   const copyToClipboard = async () => {

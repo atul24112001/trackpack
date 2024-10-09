@@ -3,6 +3,8 @@ import { atom, selector } from "recoil";
 type State = {
   accounts: null | { [key: string]: Account };
   activeAccountId: string | null;
+  activeBlockchain: null | string;
+  activeWallet: string | null;
 };
 
 export const state = atom<State>({
@@ -10,6 +12,8 @@ export const state = atom<State>({
   default: {
     accounts: null,
     activeAccountId: null,
+    activeBlockchain: null,
+    activeWallet: null,
   },
 });
 
@@ -20,9 +24,9 @@ export const accountState = selector({
     return accounts;
   },
   set: ({ set, get }, value) => {
-    const activeAccountId = get(state).activeAccountId;
+    const currentState = get(state);
     set(state, {
-      activeAccountId,
+      ...currentState,
       accounts: value as null | { [key: string]: Account },
     });
   },
@@ -31,14 +35,44 @@ export const accountState = selector({
 export const activeAccountState = selector({
   key: "active-account-selector",
   get: ({ get }) => {
-    const {  activeAccountId } = get(state);
+    const { activeAccountId } = get(state);
     return activeAccountId;
   },
   set: ({ set, get }, value) => {
-    const { accounts } = get(state);
+    const currentState = get(state);
     set(state, {
+      ...currentState,
       activeAccountId: value as string | null,
-      accounts,
+    });
+  },
+});
+
+export const activeBlockchainState = selector({
+  key: "active-blockchain-selector",
+  get: ({ get }) => {
+    const { activeBlockchain } = get(state);
+    return activeBlockchain;
+  },
+  set: ({ set, get }, value) => {
+    const currentState = get(state);
+    set(state, {
+      ...currentState,
+      activeBlockchain: value as null | string,
+    });
+  },
+});
+
+export const activeWalletState = selector({
+  key: "active-wallet-selector",
+  get: ({ get }) => {
+    const { activeWallet } = get(state);
+    return activeWallet;
+  },
+  set: ({ set, get }, value) => {
+    const currentState = get(state);
+    set(state, {
+      ...currentState,
+      activeWallet: value as null | string,
     });
   },
 });
