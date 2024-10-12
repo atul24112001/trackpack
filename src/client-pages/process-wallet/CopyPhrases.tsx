@@ -11,7 +11,7 @@ import { _copyToClipBoard } from "@/lib/utils";
 import { useSetRecoilState } from "recoil";
 import { accountState, activeBlockchainState } from "@/store/atom/accounts";
 
-export default function CopyPhrases({ selectedNetwork, newWallet }: Props) {
+export default function CopyPhrases({ newWallet, accountDetails }: Props) {
   const [mnemonic, setMnemonic] = useState<string[] | null>(null);
   const [copied, setCopied] = useState(false);
   const setAccounts = useSetRecoilState(accountState);
@@ -40,7 +40,7 @@ export default function CopyPhrases({ selectedNetwork, newWallet }: Props) {
   };
 
   const createWallet = () => {
-    if (!mnemonic || !selectedNetwork) {
+    if (!mnemonic || !accountDetails.network) {
       return;
     }
     if ((mnemonic.filter((w) => w.trim() !== "")?.length || 0) < 12) {
@@ -53,17 +53,20 @@ export default function CopyPhrases({ selectedNetwork, newWallet }: Props) {
         encryptMessage(mnemonic.filter((w) => w.trim() !== "").join(" "))
       )
     );
-    const accountId = crypto.randomUUID();
     const updatedAccounts = _createWallet(
-      selectedNetwork,
-      accountId,
-      "Account " + accountId
+      accountDetails.network,
+      accountDetails.id,
+      accountDetails.name,
+      accountDetails.accountType
     );
     setAccounts(updatedAccounts);
-    setActiveBlockchain(selectedNetwork);
+    setActiveBlockchain(accountDetails.network);
     setTimeout(() => {
-      router.push(`/${accountId}`);
+      router.push("/");
     }, 200);
+    setTimeout(() => {
+      router.refresh();
+    }, 1000);
   };
 
   const copyToClipboard = async () => {
@@ -128,6 +131,6 @@ export default function CopyPhrases({ selectedNetwork, newWallet }: Props) {
 }
 
 type Props = {
-  selectedNetwork: string | null;
   newWallet: boolean;
+  accountDetails: AccountDetails;
 };

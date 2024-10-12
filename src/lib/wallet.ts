@@ -3,6 +3,9 @@ import { decryptMessage, encryptMessage } from "./bcrypt";
 import EthereumNetwork from "./generator/ethereum";
 import SolanaNetwork from "./generator/solana";
 
+export const NEXT_PUBLIC_ALCHEMY_API_KEY =
+  process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
+
 export const _networks: { [key: string]: Network } = {
   "501": SolanaNetwork,
   // "966": {
@@ -15,7 +18,8 @@ export const _networks: { [key: string]: Network } = {
 export function _createWallet(
   selectedNetwork: string,
   accountId: string,
-  accountTitle: string
+  accountTitle: string,
+  accountType: AccountType
 ) {
   let walletNumber = 0;
   const state = localStorage.getItem("state");
@@ -32,7 +36,10 @@ export function _createWallet(
   }
   const path = `m/44'/${selectedNetwork}'/${walletNumber}'/0'`;
   const network = _networks[selectedNetwork];
-  const { publicKey, secret } = network.generateWallet(path);
+  const { publicKey, secret } =
+    accountType === "single-chain"
+      ? network.generateSingleChainWallet(path)
+      : network.generateHDWallet(path);
 
   const updatedAccounts: { [key: string]: Account } = JSON.parse(
     JSON.stringify(accounts || {})
@@ -40,6 +47,7 @@ export function _createWallet(
   if (!updatedAccounts[accountId]) {
     updatedAccounts[accountId] = {
       title: accountTitle,
+      type: accountType,
       wallets: {},
     };
   }
@@ -65,7 +73,6 @@ export const getSeed = () => {
     ? decryptMessage(JSON.parse(mnemonicExists))
     : generateMnemonic();
 
-  console.log({ mnemonic });
   const seed = mnemonicToSeedSync(mnemonic);
   return seed;
 };

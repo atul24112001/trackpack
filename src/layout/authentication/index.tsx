@@ -71,7 +71,6 @@ export default function Authentication({ children }: PropsWithChildren) {
   const checkPassword = () => {
     const targetHash = localStorage.getItem("security");
     const currentHah = generateSecureHash(value.password);
-    console.log({ targetHash, currentHah });
     if (targetHash === currentHah) {
       successfullyAuthHandler();
     }
@@ -94,6 +93,22 @@ export default function Authentication({ children }: PropsWithChildren) {
       checkPassword();
     }
   };
+
+  function enterHandler(e: KeyboardEvent) {
+    console.log(e.key);
+    if (e.key == "enter") {
+      confirmHandler();
+    }
+  }
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      document.addEventListener("keypress", enterHandler);
+      return () => {
+        document.removeEventListener("keypress", enterHandler);
+      };
+    }
+  }, [isAuthenticated]);
 
   return isAuthenticated ? (
     <>
@@ -171,7 +186,7 @@ export default function Authentication({ children }: PropsWithChildren) {
           className="mt-4"
           onClick={confirmHandler}
         >
-          Confirm
+          {newUser ? "Confirm" : "Unlock"}
         </Button>
       </div>
     </div>

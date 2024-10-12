@@ -1,15 +1,22 @@
 import { _copyToClipBoard } from "@/lib/utils";
+import { activeWalletState } from "@/store/atom/accounts";
 import { Copy, CopyCheck, Eye, EyeOff } from "lucide-react";
 import React, { useState } from "react";
+import { useSetRecoilState } from "recoil";
 
 export default function Wallet({ item, network, publicKey, secret }: Props) {
   const [copiedPublicKey, setCopiedPublicKey] = useState(false);
   const [copiedSecret, setCopiedSecret] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
+  const setActiveWallet = useSetRecoilState(activeWalletState);
 
-  const toggleSecretVisibility = () => setShowSecret((prev) => !prev);
+  const toggleSecretVisibility = (e: any) => {
+    e.stopPropagation();
+    setShowSecret((prev) => !prev);
+  };
 
-  const copyPublicKeyHandler = () => {
+  const copyPublicKeyHandler = (e: any) => {
+    e.stopPropagation();
     _copyToClipBoard(publicKey, () => {
       setCopiedPublicKey(true);
       setTimeout(() => {
@@ -18,7 +25,8 @@ export default function Wallet({ item, network, publicKey, secret }: Props) {
     });
   };
 
-  const copyPrivateKeyHandler = () => {
+  const copyPrivateKeyHandler = (e: any) => {
+    e.stopPropagation();
     _copyToClipBoard(secret, () => {
       setCopiedSecret(true);
       setTimeout(() => {
@@ -28,7 +36,12 @@ export default function Wallet({ item, network, publicKey, secret }: Props) {
   };
 
   return (
-    <div className="bg-background-secondary px-6 py-4 mb-4 rounded-lg">
+    <div
+      onClick={() => {
+        setActiveWallet(publicKey);
+      }}
+      className="cursor-pointer bg-background-secondary px-6 py-4 mb-4 rounded-lg"
+    >
       <div className="flex items-center gap-3 mb-4">
         <img className="w-9 h-9" alt={item} src={network.image} />
         <h1 className="text-2xl font-bold">{network.title}</h1>

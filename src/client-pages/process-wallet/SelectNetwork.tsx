@@ -3,7 +3,7 @@ import { _networks } from "@/lib/wallet";
 import React from "react";
 
 export default function SelectNetwork({ onNext, onSelectNetwork }: Props) {
-  const networks = ["501", "60", "966"];
+  const networks = ["501", "60"];
   return (
     <div className=" rounded-md px-6 py-4 flex flex-col gap-6 items-center">
       <h1 className="text-2xl md:text-4xl font-bold text-center ">

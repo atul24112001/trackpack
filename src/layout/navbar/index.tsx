@@ -3,12 +3,13 @@
 import Each from "@/components/helper/Each";
 import {
   accountState,
+  activeAccountState,
   activeBlockchainState,
   activeWalletState,
 } from "@/store/atom/accounts";
 import { Check, ChevronDown, Copy, CopyCheck } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 
 import { _networks } from "@/lib/wallet";
 import { decryptMessage } from "@/lib/bcrypt";
@@ -32,6 +33,7 @@ export default function Navbar() {
     activeBlockchainState
   );
   const [activeWallet, setActiveWallet] = useRecoilState(activeWalletState);
+  const setActiveAccount = useSetRecoilState(activeAccountState);
 
   const params = useParams();
   const router = useRouter();
@@ -53,6 +55,7 @@ export default function Navbar() {
             Object.keys(_accountMap)[0];
 
           if (typeof newActiveAccount == "string") {
+            setActiveAccount(newActiveAccount);
             router.push(`/${newActiveAccount}`);
           }
         }
@@ -90,7 +93,7 @@ export default function Navbar() {
   }
 
   return (
-    <div className="w-[90%] mt-5 mx-auto flex justify-between items-center">
+    <div className="w-11/12 md:w-1/2 lg:w-2/5 mt-5 mx-auto flex justify-between items-center">
       <NavbarLeading
         activeAccount={activeAccount}
         activeAccountId={activeAccountId}
@@ -193,6 +196,7 @@ export default function Navbar() {
         </MenubarMenu>
       </Menubar>
       <NavbarEnding
+        accountType={activeAccount.type}
         activeAccount={activeAccount}
         activeAccountId={activeAccountId}
       />

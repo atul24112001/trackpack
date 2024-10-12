@@ -10,7 +10,11 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { getInitials } from "@/lib/helper";
-import { accountState, activeWalletState } from "@/store/atom/accounts";
+import {
+  accountState,
+  activeAccountState,
+  activeWalletState,
+} from "@/store/atom/accounts";
 import { AvatarFallback } from "@radix-ui/react-avatar";
 import { Check, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -23,6 +27,7 @@ export default function NavbarLeading({
 }: Props) {
   const accounts = useRecoilValue(accountState);
   const setActiveWallet = useSetRecoilState(activeWalletState);
+  const setActiveAccountId = useSetRecoilState(activeAccountState);
   const router = useRouter();
 
   const changeAccountHandler = (id: string) => {
@@ -30,6 +35,7 @@ export default function NavbarLeading({
       return;
     }
     localStorage.setItem("activeAccount", id);
+    setActiveAccountId(id);
     const activeWallet =
       accounts[id].wallets[localStorage.getItem("network") || ""]?.[0]
         ?.publicKey;
@@ -92,12 +98,17 @@ export default function NavbarLeading({
               padding: "8px 8px",
             }}
           >
-            <Plus width={18} /> Add Account
+            <Plus width={18} /> Create Account
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => {}} style={{ flex: 1, gap: 3 }}>
+          <DropdownMenuItem
+            onClick={() => {
+              router.push("/settings");
+            }}
+            style={{ flex: 1, gap: 3 }}
+          >
             Settings
           </DropdownMenuItem>
           <DropdownMenuItem
