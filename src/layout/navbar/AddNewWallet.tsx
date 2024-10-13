@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { MenubarItem } from "@/components/ui/menubar";
 import { _createWallet } from "@/lib/wallet";
 import {
   accountState,
@@ -9,7 +9,7 @@ import { Plus } from "lucide-react";
 import React from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 
-export default function NavbarEnding({
+export default function AddNewWallet({
   activeAccountId,
   activeAccount,
   accountType,
@@ -24,29 +24,23 @@ export default function NavbarEnding({
       return;
     }
 
-    const updatedAccounts = _createWallet(
+    const [updatedAccounts, wallet] = _createWallet(
       activeBlockchain,
       activeAccountId,
       activeAccount.title,
       activeAccount.type
     );
 
-    const wallets = updatedAccounts[activeAccountId].wallets[activeBlockchain];
-    setActiveWallet(wallets[wallets.length - 1].publicKey);
+    setActiveWallet(wallet.publicKey);
     setAccounts(updatedAccounts);
   };
 
   return accountType === "single-chain" ? (
     <div></div>
   ) : (
-    <Button
-      onClick={createWallet}
-      className="gap-1"
-      size="sm"
-      variant="default"
-    >
-      <Plus size={16} /> Add Wallet
-    </Button>
+    <MenubarItem onClick={createWallet} className="gap-2">
+      <p className="flex-1">Add New Wallet</p> <Plus size={16} />
+    </MenubarItem>
   );
 }
 

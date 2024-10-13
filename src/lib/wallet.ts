@@ -1,5 +1,5 @@
 import { generateMnemonic, mnemonicToSeedSync } from "bip39";
-import { decryptMessage, encryptMessage } from "./bcrypt";
+import { decryptMessage } from "./bcrypt";
 import EthereumNetwork from "./generator/ethereum";
 import SolanaNetwork from "./generator/solana";
 
@@ -20,7 +20,7 @@ export function _createWallet(
   accountId: string,
   accountTitle: string,
   accountType: AccountType
-) {
+): [{ [key: string]: Account }, Wallet] {
   let walletNumber = 0;
   const state = localStorage.getItem("state");
   let accounts: null | { [key: string]: Account } = null;
@@ -61,10 +61,13 @@ export function _createWallet(
     secret,
   };
 
-  const encryptedState = encryptMessage(JSON.stringify(updatedAccounts));
-  localStorage.setItem("state", JSON.stringify(encryptedState));
-  localStorage.setItem("network", selectedNetwork);
-  return updatedAccounts;
+  return [
+    updatedAccounts,
+    {
+      publicKey,
+      secret,
+    },
+  ];
 }
 
 export const getSeed = () => {

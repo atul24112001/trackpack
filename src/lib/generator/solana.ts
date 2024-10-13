@@ -12,9 +12,15 @@ import { getSeed } from "../wallet";
 import {
   createTransferInstruction,
   getAssociatedTokenAddress,
-  // createAccount,
-  // createMint
+  createMint,
+  mintTo,
+  getOrCreateAssociatedTokenAccount,
+  getMint,
 } from "@solana/spl-token";
+// import {
+//   Metaplex,
+//   keypairIdentity,
+// } from "@metaplex-foundation/js";
 
 let devnetConnection: Connection | null = null;
 let mainnetConnection: Connection | null = null;
@@ -33,6 +39,7 @@ function getConnection() {
   if (!devnetConnection) {
     devnetConnection = new Connection(
       "https://api.devnet.solana.com"
+      // "http://127.0.0.1:8899"
       // `https://solana-devnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
     );
   }
@@ -80,16 +87,21 @@ async function getTokens(walletAddress: string): Promise<Token[]> {
       programId: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
     }
   );
-  const tokens = tokenAccounts.value.map(({ account }) => {
-    const accountInfo = account.data.parsed.info;
-    const balance = parseInt(accountInfo.tokenAmount.amount);
-    const mint = accountInfo.mint;
-    return {
-      address: mint,
-      balance,
-      decimals: accountInfo.tokenAmount.decimals,
-    };
-  });
+  const tokens = await Promise.all(
+    tokenAccounts.value.map(async ({ account }) => {
+      const accountInfo = account.data.parsed.info;
+      const balance = parseInt(accountInfo.tokenAmount.amount);
+      const mint = accountInfo.mint;
+      const mintInfo = await getMint(getConnection(), new PublicKey(mint));
+
+      return {
+        owner: mintInfo.mintAuthority?.toBase58() || "",
+        address: mint,
+        balance,
+        decimals: accountInfo.tokenAmount.decimals,
+      };
+    })
+  );
 
   return tokens;
 }
@@ -114,14 +126,16 @@ async function transferToken(
     senderKeypair.publicKey
   );
 
-  const recipientTokenAddress = await getAssociatedTokenAddress(
+  const recipientTokenAddress = await getOrCreateAssociatedTokenAccount(
+    getConnection(),
+    senderKeypair,
     tokenMintAddress,
     _recipientPublicKey
   );
 
   const transferInstruction = createTransferInstruction(
     senderTokenAddress,
-    recipientTokenAddress,
+    recipientTokenAddress.address,
     senderKeypair.publicKey,
     amountInSmallestUnit
   );
@@ -144,6 +158,68 @@ async function transferToken(
 
   return signature;
 }
+
+async function mintYourToken(
+  mint: string,
+  senderSecretKey: string,
+  amount: number
+) {
+  const _secret = new Uint8Array(Object.values(JSON.parse(senderSecretKey)));
+  const wallet = Keypair.fromSecretKey(_secret);
+  const _mint = new PublicKey(mint);
+
+  const tokenAccount = await getOrCreateAssociatedTokenAccount(
+    getConnection(),
+    wallet,
+    _mint,
+    wallet.publicKey
+  );
+
+  await mintTo(
+    getConnection(),
+    wallet,
+    tokenAccount.mint,
+    tokenAccount.address,
+    wallet.publicKey,
+    amount
+  );
+}
+
+async function createNewToken(senderSecretKey: string, decimals: number) {
+  const _secret = new Uint8Array(Object.values(JSON.parse(senderSecretKey)));
+  const wallet = Keypair.fromSecretKey(_secret);
+  const mint = await createMint(
+    getConnection(),
+    wallet,
+    wallet.publicKey,
+    wallet.publicKey,
+    decimals
+  );
+
+  const tokenAccount = await getOrCreateAssociatedTokenAccount(
+    getConnection(),
+    wallet,
+    mint,
+    wallet.publicKey
+  );
+  return tokenAccount;
+}
+
+// async function updateTokenMetaData() {
+//   // if (metaData) {
+//   //   const metaplex = Metaplex.make(getConnection())
+//   //     .use(keypairIdentity(wallet))
+//   //     // .use(bundlrStorage());
+//   //   const { nft } = await metaplex.nfts().create({
+//   //     uri: metaData,
+//   //     name: "My Custom Token",
+//   //     symbol: "MCT",
+//   //     sellerFeeBasisPoints: 500, // 5% royalty (optional)
+//   //     updateAuthority: wallet,
+//   //     useExistingMint: mint
+//   //   });
+//   // }
+// }
 
 async function transfer(
   recipientPublicKey: string,
@@ -190,6 +266,8 @@ const SolanaNetwork: Network = {
   isValidPublicKey,
   transfer,
   transferToken,
+  createNewToken,
+  mintYourToken,
 };
 
 export default SolanaNetwork;

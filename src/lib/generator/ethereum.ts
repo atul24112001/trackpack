@@ -74,6 +74,7 @@ async function getTokens(walletAddress: string) {
         address: tokenAddress,
         balance: parseInt(readableBalance),
         decimals,
+        owner: "",
       };
     })
   );
@@ -93,6 +94,18 @@ async function transferToken() {
   return "";
 }
 
+async function mintYourToken(
+  mint: string,
+  senderSecretKey: string,
+  amount: number
+) {
+  console.log({ mint, senderSecretKey, amount });
+}
+
+async function createNewToken(senderSecretKey: string, decimals: number) {
+  console.log({ senderSecretKey, decimals });
+}
+
 const EthereumNetwork: Network = {
   title: "Ethereum",
   smallestUnit: "Wei",
@@ -106,6 +119,8 @@ const EthereumNetwork: Network = {
   isValidPublicKey,
   transfer,
   transferToken,
+  createNewToken,
+  mintYourToken,
 };
 
 export default EthereumNetwork;

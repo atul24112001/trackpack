@@ -34,13 +34,11 @@ export default function NavbarLeading({
     if (!accounts) {
       return;
     }
-    localStorage.setItem("activeAccount", id);
     setActiveAccountId(id);
     const activeWallet =
       accounts[id].wallets[localStorage.getItem("network") || ""]?.[0]
         ?.publicKey;
     if (activeWallet) {
-      localStorage.setItem("active-wallet", activeWallet);
       setActiveWallet(activeWallet);
     }
     router.push(`/${id}`);

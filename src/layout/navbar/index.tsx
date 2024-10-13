@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/menubar";
 // import { MenubarTrigger } from "@radix-ui/react-menubar";
 import NavbarLeading from "./Leading";
-import NavbarEnding from "./Ending";
+import AddNewWallet from "./AddNewWallet";
 
 export default function Navbar() {
   const [copied, setCopied] = useState(false);
@@ -39,11 +39,13 @@ export default function Navbar() {
   const router = useRouter();
 
   useEffect(() => {
+    console.log({ accounts });
     if (!accounts) {
       const stateString = localStorage.getItem("state");
       if (stateString) {
         const state = JSON.parse(stateString);
         const _accountMap = JSON.parse(decryptMessage(state));
+        console.log({ _accountMap });
         const targetNetwork = localStorage.getItem("network");
         setAccounts(_accountMap);
         setActiveBlockchain(targetNetwork || "501");
@@ -71,7 +73,10 @@ export default function Navbar() {
   }, [params.accountId]);
 
   const activeAccount = useMemo(() => {
-    return accounts?.[activeAccountId || ""] || null;
+    if (accounts && activeAccountId) {
+      return accounts[activeAccountId];
+    }
+    return null;
   }, [accounts, activeAccountId]);
 
   const changeNetworkHandler = (item: string) => {
@@ -83,9 +88,7 @@ export default function Navbar() {
       accounts[activeAccountId].wallets[item]?.[0].publicKey;
     if (newActiveWallet) {
       setActiveWallet(newActiveWallet);
-      localStorage.setItem("active-wallet", newActiveWallet);
     }
-    localStorage.setItem("network", item);
   };
 
   if (!activeAccount) {
@@ -140,6 +143,7 @@ export default function Navbar() {
         <MenubarSeparator className="w-[2px] bg-background-secondary h-full" />
         <MenubarMenu>
           <MenubarTrigger className="">
+            <ChevronDown size={20} />
             <p className="ml-1 px-1">
               {activeWallet?.substring(0, 4)}...{activeWallet?.substring(40)}
             </p>
@@ -154,7 +158,6 @@ export default function Navbar() {
                       <p
                         onClick={() => {
                           setActiveWallet(item.publicKey);
-                          localStorage.setItem("active-wallet", item.publicKey);
                         }}
                         className="text-ellipsis flex-1 "
                       >
@@ -173,6 +176,11 @@ export default function Navbar() {
                     </MenubarItem>
                   );
                 }}
+              />
+              <AddNewWallet
+                accountType={activeAccount.type}
+                activeAccount={activeAccount}
+                activeAccountId={activeAccountId}
               />
             </MenubarContent>
           )}
@@ -195,11 +203,6 @@ export default function Navbar() {
           </MenubarTrigger>
         </MenubarMenu>
       </Menubar>
-      <NavbarEnding
-        accountType={activeAccount.type}
-        activeAccount={activeAccount}
-        activeAccountId={activeAccountId}
-      />
     </div>
   );
 }

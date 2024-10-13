@@ -21,6 +21,12 @@ type Network = {
   generateSingleChainWallet: (path: string) => Wallet;
   getTokens: (publicKey: string) => Promise<Token[]>;
   isValidPublicKey: (publicKey: string) => Promise<boolean>;
+  mintYourToken: (
+    mint: string,
+    senderSecretKey: string,
+    amount: number
+  ) => Promise<any>;
+  createNewToken: (senderSecretKey: string, decimals: number) => Promise<any>;
   transfer: (
     recipientPublicKey: string,
     amountInSmallestUnit: number,
@@ -41,7 +47,12 @@ type AccountDetails = {
   network: string;
 };
 
-type Token = { address: string; balance: number; decimals: number };
+type Token = {
+  address: string;
+  balance: number;
+  decimals: number;
+  owner: string;
+};
 type Balance = { amount: number; decimal: number };
 
 type AccountType = "multi-chain" | "single-chain";

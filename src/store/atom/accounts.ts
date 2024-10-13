@@ -1,3 +1,4 @@
+import { encryptMessage } from "@/lib/bcrypt";
 import { atom, selector } from "recoil";
 
 type State = {
@@ -25,6 +26,10 @@ export const accountState = selector({
   },
   set: ({ set, get }, value) => {
     const currentState = get(state);
+    localStorage.setItem(
+      "state",
+      JSON.stringify(encryptMessage(JSON.stringify(value)))
+    );
     set(state, {
       ...currentState,
       accounts: value as null | { [key: string]: Account },
@@ -40,6 +45,7 @@ export const activeAccountState = selector({
   },
   set: ({ set, get }, value) => {
     const currentState = get(state);
+    localStorage.setItem("activeAccount", value as string);
     set(state, {
       ...currentState,
       activeAccountId: value as string | null,
@@ -55,6 +61,7 @@ export const activeBlockchainState = selector({
   },
   set: ({ set, get }, value) => {
     const currentState = get(state);
+    localStorage.setItem("network", value as string);
     set(state, {
       ...currentState,
       activeBlockchain: value as null | string,
@@ -70,6 +77,7 @@ export const activeWalletState = selector({
   },
   set: ({ set, get }, value) => {
     const currentState = get(state);
+    localStorage.setItem("active-wallet", value as string);
     set(state, {
       ...currentState,
       activeWallet: value as null | string,

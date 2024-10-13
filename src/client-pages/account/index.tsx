@@ -24,7 +24,7 @@ export default function Account({ activeAccountId }: Props) {
   }, [accounts, activeAccountId]);
 
   useLayoutEffect(() => {
-    if (!activeAccount || !activeBlockchain) {
+    if (!activeAccount) {
       router.push("/");
     }
   }, [activeAccount, activeBlockchain]);
@@ -69,6 +69,12 @@ export default function Account({ activeAccountId }: Props) {
       )}
       {activeWallet && walletLength > 0 && (
         <WalletDetails publicKey={activeWallet} />
+      )}
+
+      {!activeWallet && (
+        <p className="text-center opacity-70 my-2">
+          Please select/create a wallet.
+        </p>
       )}
     </div>
   );

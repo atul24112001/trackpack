@@ -46,5 +46,7 @@ export default function useNetwork() {
     wallet,
     transfer: targetNetwork.transfer,
     transferToken: targetNetwork.transferToken,
+    createNewToken: targetNetwork.createNewToken,
+    mintYourToken: targetNetwork.mintYourToken,
   };
 }
