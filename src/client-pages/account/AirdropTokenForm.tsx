@@ -6,15 +6,14 @@ import React, { FormEvent, useRef, useState } from "react";
 import TransferStatusComponent from "./transfer-status";
 import useNetwork from "@/hooks/use-network";
 
-export default function MintTokenForm({
+export default function AirdropTokenForm({
   toggleSheet,
-  address,
   decimals,
   reset,
 }: Props) {
   const amountRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<TransferStatus>("not-initiated");
-  const { mintYourToken, wallet } = useNetwork();
+  const { requestAirDrop, wallet } = useNetwork();
 
   const submitHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,7 +24,7 @@ export default function MintTokenForm({
 
     try {
       setStatus("processing");
-      await mintYourToken(address, wallet.secret, value * 10 ** decimals);
+      await requestAirDrop(wallet.secret, value);
       setStatus("success");
       reset();
     } catch (error) {
@@ -43,7 +42,7 @@ export default function MintTokenForm({
         <>
           <div className="mb-4">
             <Label htmlFor="amount">
-              Amount{" x "}
+              Amount{" X "}
               <span className="opacity-60">10^{decimals}</span>
             </Label>
             <Input
@@ -66,13 +65,18 @@ export default function MintTokenForm({
               Cancel
             </Button>
             <Button className="w-full" type="submit">
-              Mint
+              Airdrop
             </Button>
           </SheetFooter>
         </>
       )}
       {status !== "not-initiated" && (
-        <TransferStatusComponent status={status} />
+        <TransferStatusComponent
+          status={status}
+          processingMessage="Processing airdrop"
+          failedMessage="Airdrop failed"
+          successMessage="Airdrop successful"
+        />
       )}
     </form>
   );
@@ -80,7 +84,6 @@ export default function MintTokenForm({
 
 type Props = {
   toggleSheet: () => void;
-  address: string;
   decimals: number;
   reset: () => void;
 };

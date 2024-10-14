@@ -38,6 +38,7 @@ type Network = {
     senderSecretKey: string,
     mint: string
   ) => Promise<string>;
+  requestAirdrop: (senderSecretKey: string, amount: number) => Promise<void>;
 };
 
 type AccountDetails = {
@@ -52,8 +53,15 @@ type Token = {
   balance: number;
   decimals: number;
   owner: string;
+  metadata: Metadata;
 };
 type Balance = { amount: number; decimal: number };
 
 type AccountType = "multi-chain" | "single-chain";
 type TransferStatus = "not-initiated" | "processing" | "failed" | "success";
+
+type Metadata = {
+  name: string;
+  symbol: string;
+  image?: string;
+};

@@ -51,16 +51,19 @@ export default function WalletDetails({}: Props) {
     setShowCreateTokeForm((prev) => !prev);
   };
 
+  const mode = localStorage.getItem("mode");
+
   return (
     <div>
       <p className="text-center opacity-60 mb-2">
-        Select a token to see more option
+        Select a token to see more option {mode !== "mainnet" ?"in testing mode" : "" }
       </p>
       {!loading && (
         <>
           {balance && blockchain && _networks[blockchain] && (
             <TokenCard
-              owner=""
+              metadata={{ name: "", symbol: "" }}
+              owner="main"
               reset={reset}
               token={false}
               address={_networks[blockchain].title}

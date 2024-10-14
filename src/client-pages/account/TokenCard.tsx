@@ -8,11 +8,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { getInitials } from "@/lib/helper";
-import { ArrowDown, ArrowUp, Pickaxe } from "lucide-react";
+import { ArrowDown, ArrowUp, Pickaxe, PlaneLanding } from "lucide-react";
 import React, { useState } from "react";
 import useNetwork from "@/hooks/use-network";
 import SendTokenForm from "./SendTokenForm";
 import MintTokenForm from "./MintTokenForm";
+import AirdropTokenForm from "./AirdropTokenForm";
 
 export default function TokenCard({
   address,
@@ -26,9 +27,9 @@ export default function TokenCard({
   owner,
 }: Props) {
   const [openSheet, setOpenSheet] = useState(false);
-  const [action, setAction] = useState<"send" | "receive" | "mint" | null>(
-    null
-  );
+  const [action, setAction] = useState<
+    "send" | "receive" | "airdrop" | "mint" | null
+  >(null);
   const { wallet } = useNetwork();
 
   const toggleSheet = () => setOpenSheet((prev) => !prev);
@@ -84,7 +85,7 @@ export default function TokenCard({
               {address.length > 15 ? `${address.slice(0, 20)}...` : address}
             </h3>
             <p className="opacity-50 text-center text-sm">
-              {balance} {unit}
+              {balance / 10 ** decimals} {unit}
             </p>
             <div className="flex my-2 justify-center gap-2">
               <Button
@@ -103,6 +104,17 @@ export default function TokenCard({
               >
                 <ArrowDown />
               </Button>
+              {owner === "main" &&
+                localStorage.getItem("mode") !== "mainnet" && (
+                  <Button
+                    type="button"
+                    onClick={() => setAction("airdrop")}
+                    variant="secondary"
+                    size="icon"
+                  >
+                    <PlaneLanding />
+                  </Button>
+                )}
               {owner === wallet?.publicKey && (
                 <Button
                   type="button"
@@ -133,6 +145,17 @@ export default function TokenCard({
         {action === "mint" && (
           <MintTokenForm
             address={address}
+            toggleSheet={toggleSheet}
+            decimals={decimals}
+            reset={() => {
+              reset();
+              setAction(null);
+            }}
+          />
+        )}
+
+        {action === "airdrop" && (
+          <AirdropTokenForm
             toggleSheet={toggleSheet}
             decimals={decimals}
             reset={() => {

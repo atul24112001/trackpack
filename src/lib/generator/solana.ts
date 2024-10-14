@@ -5,6 +5,7 @@ import {
   SystemProgram,
   Transaction,
   sendAndConfirmTransaction,
+  LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
 import { derivePath } from "ed25519-hd-key";
 import nacl from "tweetnacl";
@@ -17,10 +18,7 @@ import {
   getOrCreateAssociatedTokenAccount,
   getMint,
 } from "@solana/spl-token";
-// import {
-//   Metaplex,
-//   keypairIdentity,
-// } from "@metaplex-foundation/js";
+import { Metaplex } from "@metaplex-foundation/js";
 
 let devnetConnection: Connection | null = null;
 let mainnetConnection: Connection | null = null;
@@ -87,18 +85,47 @@ async function getTokens(walletAddress: string): Promise<Token[]> {
       programId: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
     }
   );
+
   const tokens = await Promise.all(
     tokenAccounts.value.map(async ({ account }) => {
       const accountInfo = account.data.parsed.info;
       const balance = parseInt(accountInfo.tokenAmount.amount);
       const mint = accountInfo.mint;
-      const mintInfo = await getMint(getConnection(), new PublicKey(mint));
+      console.log({ mint });
+      const mintAddress = new PublicKey(mint);
+      const mintInfo = await getMint(getConnection(), mintAddress);
+
+      const metaplex = Metaplex.make(getConnection());
+      const metadataAccount = metaplex
+        .nfts()
+        .pdas()
+        .metadata({ mint: mintAddress });
+
+      const metadataAccountInfo = await getConnection().getAccountInfo(
+        metadataAccount
+      );
+
+      const metadata: Metadata = {
+        name: "Unknown Token",
+        symbol: mintAddress.toBase58(),
+      };
+
+      if (metadataAccountInfo) {
+        const token = await metaplex
+          .nfts()
+          .findByMint({ mintAddress: mintAddress });
+        console.log({ token });
+        metadata.name = token.name;
+        metadata.symbol = token.symbol;
+        metadata.image = token.json?.image;
+      }
 
       return {
         owner: mintInfo.mintAuthority?.toBase58() || "",
         address: mint,
         balance,
         decimals: accountInfo.tokenAmount.decimals,
+        metadata,
       };
     })
   );
@@ -119,7 +146,7 @@ async function transferToken(
   const tokenMintAddress = new PublicKey(mint);
 
   const connection = getConnection();
-  const latestBlockhash = await connection.getLatestBlockhash("processed");
+  const latestBlockhash = await connection.getLatestBlockhash();
 
   const senderTokenAddress = await getAssociatedTokenAddress(
     tokenMintAddress,
@@ -140,10 +167,11 @@ async function transferToken(
     amountInSmallestUnit
   );
 
-  const transaction = new Transaction({
-    recentBlockhash: latestBlockhash.blockhash,
-    feePayer: senderKeypair.publicKey,
-  }).add(transferInstruction);
+  const transaction = new Transaction();
+  transaction.add(transferInstruction);
+
+  transaction.recentBlockhash = latestBlockhash.blockhash;
+  transaction.feePayer = senderKeypair.publicKey;
 
   const signature = await sendAndConfirmTransaction(
     connection,
@@ -234,7 +262,9 @@ async function transfer(
     toPubkey: _recipientPublicKey,
     lamports: amountInSmallestUnit,
   });
-  const transaction = new Transaction().add(transfer);
+  const transaction = new Transaction();
+  transaction.add(transfer);
+
   const signature = await sendAndConfirmTransaction(
     getConnection(),
     transaction,
@@ -253,6 +283,23 @@ async function isValidPublicKey(key: string) {
   }
 }
 
+async function requestAirdrop(senderSecretKey: string, amount: number) {
+  const connection = getConnection();
+  const _secret = new Uint8Array(Object.values(JSON.parse(senderSecretKey)));
+  const wallet = Keypair.fromSecretKey(_secret);
+  const signature = await connection.requestAirdrop(
+    wallet.publicKey,
+    amount * LAMPORTS_PER_SOL
+  );
+  const latestBlockHash = await connection.getLatestBlockhash();
+
+  await connection.confirmTransaction({
+    signature,
+    blockhash: latestBlockHash.blockhash,
+    lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+  });
+}
+
 const SolanaNetwork: Network = {
   title: "Solana",
   smallestUnit: "Lamport",
@@ -268,6 +315,7 @@ const SolanaNetwork: Network = {
   transferToken,
   createNewToken,
   mintYourToken,
+  requestAirdrop,
 };
 
 export default SolanaNetwork;

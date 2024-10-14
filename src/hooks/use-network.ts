@@ -48,5 +48,6 @@ export default function useNetwork() {
     transferToken: targetNetwork.transferToken,
     createNewToken: targetNetwork.createNewToken,
     mintYourToken: targetNetwork.mintYourToken,
+    requestAirDrop: targetNetwork.requestAirdrop,
   };
 }

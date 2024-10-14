@@ -56,7 +56,7 @@ async function getBalance(publicKey: string): Promise<Balance> {
   };
 }
 
-async function getTokens(walletAddress: string) {
+async function getTokens(walletAddress: string): Promise<Token[]> {
   const tokenAddresses: string[] =
     JSON.parse(localStorage.getItem("selected-tokens") || "{}").ethers || [];
 
@@ -75,6 +75,10 @@ async function getTokens(walletAddress: string) {
         balance: parseInt(readableBalance),
         decimals,
         owner: "",
+        metadata: {
+          name: "",
+          symbol: "",
+        },
       };
     })
   );
@@ -106,6 +110,8 @@ async function createNewToken(senderSecretKey: string, decimals: number) {
   console.log({ senderSecretKey, decimals });
 }
 
+async function requestAirdrop() {}
+
 const EthereumNetwork: Network = {
   title: "Ethereum",
   smallestUnit: "Wei",
@@ -121,6 +127,7 @@ const EthereumNetwork: Network = {
   transferToken,
   createNewToken,
   mintYourToken,
+  requestAirdrop,
 };
 
 export default EthereumNetwork;

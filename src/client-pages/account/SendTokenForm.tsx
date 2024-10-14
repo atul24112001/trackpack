@@ -93,7 +93,7 @@ export default function SendTokenForm({
       if (token) {
         await transferToken(
           values.publicKey,
-          sendingAmount,
+          sendingAmount * 10 ** decimals,
           wallet.secret,
           address
         );
@@ -101,16 +101,14 @@ export default function SendTokenForm({
         await transfer(values.publicKey, sendingAmount, wallet.secret);
       }
       setTransferStatus("success");
-      reset();
-      toggleSheet();
     } catch (error) {
       console.log(error);
       setTransferStatus("failed");
-      setTimeout(() => {
-        reset();
-        toggleSheet();
-      }, 2000);
     }
+    setTimeout(() => {
+      reset();
+      toggleSheet();
+    }, 2000);
   }
 
   return (
@@ -138,7 +136,7 @@ export default function SendTokenForm({
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Amount (decimals: 10^{decimals})</FormLabel>
+                      <FormLabel>Amount x (10^{decimals})</FormLabel>
                       <FormControl>
                         <Input
                           maxLength={decimals}
