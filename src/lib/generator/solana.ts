@@ -16,7 +16,9 @@ import {
   createMint,
   mintTo,
   getOrCreateAssociatedTokenAccount,
+  createAssociatedTokenAccount,
   getMint,
+  getAccount,
 } from "@solana/spl-token";
 import { Metaplex } from "@metaplex-foundation/js";
 
@@ -214,6 +216,7 @@ async function mintYourToken(
 }
 
 async function createNewToken(senderSecretKey: string, decimals: number) {
+  const connection = getConnection();
   const _secret = new Uint8Array(Object.values(JSON.parse(senderSecretKey)));
   const wallet = Keypair.fromSecretKey(_secret);
   const mint = await createMint(
@@ -224,13 +227,14 @@ async function createNewToken(senderSecretKey: string, decimals: number) {
     decimals
   );
 
-  const tokenAccount = await getOrCreateAssociatedTokenAccount(
-    getConnection(),
+  const tokenAccount = await createAssociatedTokenAccount(
+    connection,
     wallet,
     mint,
     wallet.publicKey
   );
-  return tokenAccount;
+
+  await getAccount(connection, tokenAccount);
 }
 
 // async function updateTokenMetaData() {
