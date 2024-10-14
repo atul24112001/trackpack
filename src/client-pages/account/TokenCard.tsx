@@ -21,7 +21,6 @@ export default function TokenCard({
   decimals,
   onClick,
   imageSrc,
-  unit,
   token,
   reset,
   owner,
