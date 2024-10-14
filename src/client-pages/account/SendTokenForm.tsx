@@ -74,7 +74,7 @@ export default function SendTokenForm({
       });
     }
 
-    const sendingAmount = parseInt(values.amount);
+    const sendingAmount = parseFloat(values.amount);
     if (isNaN(sendingAmount)) {
       form.setError("amount", {
         message: "Invalid amount",

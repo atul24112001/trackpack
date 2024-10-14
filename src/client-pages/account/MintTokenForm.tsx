@@ -18,7 +18,7 @@ export default function MintTokenForm({
 
   const submitHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const value = parseInt(amountRef.current?.value || "asd");
+    const value = parseFloat(amountRef.current?.value || "asd");
     if (isNaN(value) || !wallet) {
       return;
     }
