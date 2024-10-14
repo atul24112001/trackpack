@@ -18,6 +18,7 @@ export default function AirdropTokenForm({
   const submitHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const value = parseInt(amountRef.current?.value || "asd");
+
     if (isNaN(value) || !wallet) {
       return;
     }

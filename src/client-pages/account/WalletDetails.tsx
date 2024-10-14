@@ -22,7 +22,13 @@ export default function WalletDetails({}: Props) {
   const blockchain = useRecoilValue(activeBlockchainState);
   const publicKey = useRecoilValue(activeWalletState);
 
-  const { getBalance, getTokens } = useNetwork();
+  const { getBalance, getTokens, wallet } = useNetwork();
+
+  useEffect(() => {
+    if (!wallet) {
+      window.location.reload();
+    }
+  }, []);
 
   async function fetchDetails() {
     if (publicKey) {
@@ -56,7 +62,8 @@ export default function WalletDetails({}: Props) {
   return (
     <div>
       <p className="text-center opacity-60 mb-2">
-        Select a token to see more option {mode !== "mainnet" ?"in testing mode" : "" }
+        Select a token to see more option{" "}
+        {mode === "mainnet" ? "" : "in testing mode"}
       </p>
       {!loading && (
         <>

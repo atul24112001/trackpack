@@ -19,6 +19,12 @@ export default function Authentication({ children }: PropsWithChildren) {
     confirmPassword: false,
   });
 
+  useEffect(() => {
+    if (!localStorage.getItem("mode")) {
+      localStorage.setItem("mode", "mainnet");
+    }
+  }, []);
+
   const [value, setValue] = useState({
     password: "",
     confirmPassword: "",

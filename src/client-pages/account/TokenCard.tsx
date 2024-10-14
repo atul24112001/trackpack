@@ -115,16 +115,17 @@ export default function TokenCard({
                     <PlaneLanding />
                   </Button>
                 )}
-              {owner === wallet?.publicKey && (
-                <Button
-                  type="button"
-                  onClick={() => setAction("mint")}
-                  variant="secondary"
-                  size="icon"
-                >
-                  <Pickaxe />
-                </Button>
-              )}
+              {owner === wallet?.publicKey &&
+                localStorage.getItem("mode") !== "mainnet" && (
+                  <Button
+                    type="button"
+                    onClick={() => setAction("mint")}
+                    variant="secondary"
+                    size="icon"
+                  >
+                    <Pickaxe />
+                  </Button>
+                )}
             </div>
           </div>
         </div>

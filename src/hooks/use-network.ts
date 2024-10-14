@@ -28,10 +28,7 @@ export default function useNetwork() {
       !activeWalletPublicKey ||
       !activeBlockchain
     ) {
-      return {
-        publicKey: "",
-        secret: "",
-      };
+      return null;
     }
     const activeWallet = accounts[activeAccountId]?.wallets[
       activeBlockchain
