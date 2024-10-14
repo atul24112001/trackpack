@@ -14,11 +14,14 @@ export default function useNetwork() {
   const activeWalletPublicKey = useRecoilValue(activeWalletState);
 
   const params = useParams();
-  const activeAccountId = params.accountId;
+  const activeAccountId =
+    typeof params.accountId === "string"
+      ? params.accountId
+      : params.accountId[0];
 
   const targetNetwork = useMemo(() => {
     if (activeBlockchain) {
-      return _networks[activeBlockchain];
+      return _networks[activeBlockchain] || "";
     }
     return _networks["501"];
   }, [activeBlockchain]);
