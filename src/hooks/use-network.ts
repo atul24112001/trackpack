@@ -1,18 +1,20 @@
 import { _networks } from "@/lib/wallet";
 import {
   accountState,
-  activeAccountState,
   activeBlockchainState,
   activeWalletState,
 } from "@/store/atom/accounts";
+import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import { useRecoilValue } from "recoil";
 
 export default function useNetwork() {
   const activeBlockchain = useRecoilValue(activeBlockchainState);
   const accounts = useRecoilValue(accountState);
-  const activeAccountId = useRecoilValue(activeAccountState);
   const activeWalletPublicKey = useRecoilValue(activeWalletState);
+
+  const params = useParams();
+  const activeAccountId = params.accountId;
 
   const targetNetwork = useMemo(() => {
     if (activeBlockchain) {
