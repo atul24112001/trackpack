@@ -254,6 +254,9 @@ async function transfer(
   amountInSmallestUnit: number,
   senderSecretKey: string
 ) {
+  const connection = getConnection();
+  const latestBlockHash = await connection.getLatestBlockhash();
+
   const _secret = new Uint8Array(Object.values(JSON.parse(senderSecretKey)));
   const senderKeypair = Keypair.fromSecretKey(_secret);
   const _recipientPublicKey = new PublicKey(recipientPublicKey);
@@ -265,11 +268,18 @@ async function transfer(
   const transaction = new Transaction();
   transaction.add(transfer);
 
-  const signature = await sendAndConfirmTransaction(
-    getConnection(),
-    transaction,
-    [senderKeypair]
-  );
+  transaction.recentBlockhash = latestBlockHash.blockhash;
+  transaction.lastValidBlockHeight = latestBlockHash.lastValidBlockHeight;
+
+  const signature = await sendAndConfirmTransaction(connection, transaction, [
+    senderKeypair,
+  ]);
+
+  await connection.confirmTransaction({
+    signature,
+    blockhash: latestBlockHash.blockhash,
+    lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+  });
   return signature;
 }
 

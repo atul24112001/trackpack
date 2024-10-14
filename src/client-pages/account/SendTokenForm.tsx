@@ -98,7 +98,11 @@ export default function SendTokenForm({
           address
         );
       } else {
-        await transfer(values.publicKey, sendingAmount, wallet.secret);
+        await transfer(
+          values.publicKey,
+          sendingAmount * 10 ** decimals,
+          wallet.secret
+        );
       }
       setTransferStatus("success");
     } catch (error) {
