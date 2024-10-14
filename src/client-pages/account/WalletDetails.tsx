@@ -12,6 +12,7 @@ import TokenCard from "./TokenCard";
 import { Button } from "@/components/ui/button";
 
 import CreateTokenForm from "./CreateTokenForm";
+import { useToast } from "@/hooks/use-toast";
 
 export default function WalletDetails({}: Props) {
   const [loading, setLoading] = useState(true);
@@ -23,12 +24,6 @@ export default function WalletDetails({}: Props) {
   const publicKey = useRecoilValue(activeWalletState);
 
   const { getBalance, getTokens, wallet } = useNetwork();
-
-  useEffect(() => {
-    if (!wallet) {
-      window.location.reload();
-    }
-  }, []);
 
   async function fetchDetails() {
     if (publicKey) {

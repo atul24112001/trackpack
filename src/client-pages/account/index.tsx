@@ -12,12 +12,14 @@ import { useRecoilState, useRecoilValue } from "recoil";
 import Wallet from "./Wallet";
 import { useRouter } from "next/navigation";
 import WalletDetails from "./WalletDetails";
+import useNetwork from "@/hooks/use-network";
 
 export default function Account({ activeAccountId }: Props) {
   const accounts = useRecoilValue(accountState);
   const activeBlockchain = useRecoilValue(activeBlockchainState);
   const [activeWallet, setActiveWallet] = useRecoilState(activeWalletState);
   const router = useRouter();
+  const { wallet } = useNetwork();
 
   const activeAccount = useMemo(() => {
     return accounts?.[activeAccountId || ""] || null;
@@ -51,7 +53,7 @@ export default function Account({ activeAccountId }: Props) {
     <div className="w-11/12 md:w-1/2 lg:w-2/5 mt-5 mx-auto">
       {walletLength === 0 && <p className="text-center opacity-75">No data</p>}
 
-      {!activeWallet && walletLength !== 0 && (
+      {(!wallet || !activeWallet) && walletLength !== 0 && (
         <Each
           of={activeAccount.wallets[activeBlockchain]}
           render={(wallet) => {
@@ -67,11 +69,11 @@ export default function Account({ activeAccountId }: Props) {
           }}
         />
       )}
-      {activeWallet && walletLength > 0 && (
+      {wallet && activeWallet && walletLength > 0 && (
         <WalletDetails publicKey={activeWallet} />
       )}
 
-      {!activeWallet && (
+      {(!activeWallet || !wallet) && (
         <p className="text-center opacity-70 my-2">
           Please select/create a wallet.
         </p>
