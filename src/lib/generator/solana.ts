@@ -30,9 +30,9 @@ function getConnection(): Connection {
 
   if (!devnetConnection) {
     devnetConnection = new Connection(
-      // "https://api.devnet.solana.com"
+      "https://api.devnet.solana.com"
       // "http://127.0.0.1:8899"
-      `https://solana-devnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
+      // `https://solana-devnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
     );
   }
 
@@ -64,7 +64,8 @@ const generateSingleChainWallet = (): Wallet => {
 
 async function getBalance(walletAddress: string): Promise<Balance> {
   const publicKey = new PublicKey(walletAddress);
-  const balance = await getConnection().getBalance(publicKey);
+  const connection = getConnection();
+  const balance = await connection.getBalance(publicKey);
   return {
     amount: balance,
     decimal: 9,
@@ -89,7 +90,8 @@ export async function getTransactions(_publicKey: string) {
 
 async function getTokens(walletAddress: string): Promise<Token[]> {
   const publicKey = new PublicKey(walletAddress);
-  const tokenAccounts = await getConnection().getParsedTokenAccountsByOwner(
+  const connection = getConnection();
+  const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
     publicKey,
     {
       programId: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
@@ -110,7 +112,7 @@ async function getTokens(walletAddress: string): Promise<Token[]> {
         .pdas()
         .metadata({ mint: mintAddress });
 
-      const metadataAccountInfo = await getConnection().getAccountInfo(
+      const metadataAccountInfo = await connection.getAccountInfo(
         metadataAccount
       );
 
