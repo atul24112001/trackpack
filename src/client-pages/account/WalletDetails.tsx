@@ -63,7 +63,10 @@ export default function WalletDetails({}: Props) {
         <>
           {balance && blockchain && _networks[blockchain] && (
             <TokenCard
-              metadata={{ name: "", symbol: "" }}
+              metadata={{
+                name: _networks[blockchain].title,
+                symbol: _networks[blockchain].unit,
+              }}
               owner="main"
               reset={reset}
               token={false}

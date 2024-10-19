@@ -10,17 +10,9 @@ import {
 import { derivePath } from "ed25519-hd-key";
 import nacl from "tweetnacl";
 import { getSeed } from "../wallet";
-import {
-  createTransferInstruction,
-  getAssociatedTokenAddress,
-  createMint,
-  mintTo,
-  getOrCreateAssociatedTokenAccount,
-  createAssociatedTokenAccount,
-  getMint,
-  getAccount,
-} from "@solana/spl-token";
+import * as TokenProgram from "@solana/spl-token";
 import { Metaplex } from "@metaplex-foundation/js";
+import { createCreateMetadataAccountV3Instruction } from "@metaplex-foundation/mpl-token-metadata";
 
 let devnetConnection: Connection | null = null;
 let mainnetConnection: Connection | null = null;
@@ -79,6 +71,22 @@ async function getBalance(walletAddress: string): Promise<Balance> {
   };
 }
 
+export async function getTransactions(_publicKey: string) {
+  const connection = getConnection();
+  const publicKey = new PublicKey(_publicKey);
+  const signatures = await connection.getSignaturesForAddress(publicKey, {
+    limit: 22,
+  });
+
+  const transactions = await connection.getTransactions(
+    signatures.map((signature) => {
+      return signature.signature;
+    })
+  );
+  console.log(transactions);
+  return transactions;
+}
+
 async function getTokens(walletAddress: string): Promise<Token[]> {
   const publicKey = new PublicKey(walletAddress);
   const tokenAccounts = await getConnection().getParsedTokenAccountsByOwner(
@@ -93,9 +101,8 @@ async function getTokens(walletAddress: string): Promise<Token[]> {
       const accountInfo = account.data.parsed.info;
       const balance = parseInt(accountInfo.tokenAmount.amount);
       const mint = accountInfo.mint;
-      console.log({ mint });
       const mintAddress = new PublicKey(mint);
-      const mintInfo = await getMint(getConnection(), mintAddress);
+      const mintInfo = await TokenProgram.getMint(getConnection(), mintAddress);
 
       const metaplex = Metaplex.make(getConnection());
       const metadataAccount = metaplex
@@ -116,10 +123,9 @@ async function getTokens(walletAddress: string): Promise<Token[]> {
         const token = await metaplex
           .nfts()
           .findByMint({ mintAddress: mintAddress });
-        console.log({ token });
-        metadata.name = token.name;
-        metadata.symbol = token.symbol;
         metadata.image = token.json?.image;
+        metadata.name = token.json?.name || token.name;
+        metadata.symbol = token.json?.symbol || token.symbol;
       }
 
       return {
@@ -150,19 +156,20 @@ async function transferToken(
   const connection = getConnection();
   const latestBlockhash = await connection.getLatestBlockhash();
 
-  const senderTokenAddress = await getAssociatedTokenAddress(
+  const senderTokenAddress = await TokenProgram.getAssociatedTokenAddress(
     tokenMintAddress,
     senderKeypair.publicKey
   );
 
-  const recipientTokenAddress = await getOrCreateAssociatedTokenAccount(
-    getConnection(),
-    senderKeypair,
-    tokenMintAddress,
-    _recipientPublicKey
-  );
+  const recipientTokenAddress =
+    await TokenProgram.getOrCreateAssociatedTokenAccount(
+      getConnection(),
+      senderKeypair,
+      tokenMintAddress,
+      _recipientPublicKey
+    );
 
-  const transferInstruction = createTransferInstruction(
+  const transferInstruction = TokenProgram.createTransferInstruction(
     senderTokenAddress,
     recipientTokenAddress.address,
     senderKeypair.publicKey,
@@ -198,14 +205,14 @@ async function mintYourToken(
   const wallet = Keypair.fromSecretKey(_secret);
   const _mint = new PublicKey(mint);
 
-  const tokenAccount = await getOrCreateAssociatedTokenAccount(
+  const tokenAccount = await TokenProgram.getOrCreateAssociatedTokenAccount(
     getConnection(),
     wallet,
     _mint,
     wallet.publicKey
   );
 
-  await mintTo(
+  await TokenProgram.mintTo(
     getConnection(),
     wallet,
     tokenAccount.mint,
@@ -215,11 +222,30 @@ async function mintYourToken(
   );
 }
 
-async function createNewToken(senderSecretKey: string, decimals: number) {
+async function getMetadataAddress(mint: PublicKey) {
+  const METADATA_PROGRAM_ID = new PublicKey(
+    "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+  );
+
+  const [metadataAddress] = await PublicKey.findProgramAddress(
+    [Buffer.from("metadata"), METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+    METADATA_PROGRAM_ID
+  );
+
+  return metadataAddress;
+}
+
+async function createNewToken(
+  senderSecretKey: string,
+  decimals: number,
+  name: string,
+  symbol: string,
+  uri: string
+) {
   const connection = getConnection();
   const _secret = new Uint8Array(Object.values(JSON.parse(senderSecretKey)));
   const wallet = Keypair.fromSecretKey(_secret);
-  const mint = await createMint(
+  const mint = await TokenProgram.createMint(
     getConnection(),
     wallet,
     wallet.publicKey,
@@ -227,31 +253,51 @@ async function createNewToken(senderSecretKey: string, decimals: number) {
     decimals
   );
 
-  const tokenAccount = await createAssociatedTokenAccount(
+  await TokenProgram.createAssociatedTokenAccount(
     connection,
     wallet,
     mint,
     wallet.publicKey
   );
 
-  await getAccount(connection, tokenAccount);
-}
+  const metadataAddress = await getMetadataAddress(mint);
+  const instruction = createCreateMetadataAccountV3Instruction(
+    {
+      metadata: metadataAddress,
+      mint,
+      mintAuthority: wallet.publicKey,
+      payer: wallet.publicKey,
+      updateAuthority: wallet.publicKey,
+    },
+    {
+      createMetadataAccountArgsV3: {
+        data: {
+          name,
+          symbol,
+          uri,
+          collection: null,
+          uses: null,
+          sellerFeeBasisPoints: 500,
+          creators: [
+            {
+              address: wallet.publicKey,
+              verified: true,
+              share: 100,
+            },
+          ],
+        },
+        isMutable: true,
+        collectionDetails: null,
+      },
+    }
+  );
 
-// async function updateTokenMetaData() {
-//   // if (metaData) {
-//   //   const metaplex = Metaplex.make(getConnection())
-//   //     .use(keypairIdentity(wallet))
-//   //     // .use(bundlrStorage());
-//   //   const { nft } = await metaplex.nfts().create({
-//   //     uri: metaData,
-//   //     name: "My Custom Token",
-//   //     symbol: "MCT",
-//   //     sellerFeeBasisPoints: 500, // 5% royalty (optional)
-//   //     updateAuthority: wallet,
-//   //     useExistingMint: mint
-//   //   });
-//   // }
-// }
+  const transaction = new Transaction().add(instruction);
+  const txSignature = await sendAndConfirmTransaction(connection, transaction, [
+    wallet,
+  ]);
+  return txSignature;
+}
 
 async function transfer(
   recipientPublicKey: string,

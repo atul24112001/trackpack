@@ -14,6 +14,9 @@ import useNetwork from "@/hooks/use-network";
 import SendTokenForm from "./SendTokenForm";
 import MintTokenForm from "./MintTokenForm";
 import AirdropTokenForm from "./AirdropTokenForm";
+// import { getTransactions } from "@/lib/generator/solana";
+// import Each from "@/components/helper/Each";
+// import Transaction from "./Transaction";
 
 export default function TokenCard({
   address,
@@ -24,14 +27,27 @@ export default function TokenCard({
   token,
   reset,
   owner,
+  metadata,
 }: Props) {
   const [openSheet, setOpenSheet] = useState(false);
+  // const [transactions, setTransactions] = useState<any>(null);
   const [action, setAction] = useState<
     "send" | "receive" | "airdrop" | "mint" | null
   >(null);
   const { wallet } = useNetwork();
 
   const toggleSheet = () => setOpenSheet((prev) => !prev);
+
+  // useEffect(() => {
+  //   if (!action && openSheet && wallet?.publicKey) {
+  //     (async () => {
+  //       const response = await getTransactions(wallet.publicKey);
+  //       setTransactions(response);
+  //     })();
+  //   }
+  // }, [openSheet]);
+
+  console.log({ metadata });
 
   return (
     <Sheet open={openSheet} onOpenChange={toggleSheet}>
@@ -41,9 +57,9 @@ export default function TokenCard({
           className="flex cursor-pointer gap-3 bg-background-secondary mt-2 px-4 py-3 rounded-lg"
         >
           <div>
-            {imageSrc ? (
+            {imageSrc || metadata.image ? (
               <Avatar>
-                <AvatarImage src={imageSrc} alt={address} />
+                <AvatarImage src={metadata.image || imageSrc} alt={address} />
               </Avatar>
             ) : (
               <LocalAvatar
@@ -57,17 +73,19 @@ export default function TokenCard({
             )}
           </div>
           <div className="overflow-hidden">
-            <h3 className="text-md ">{address}</h3>
-            <p className="opacity-50 text-sm">{balance / 10 ** decimals} </p>
+            <h3 className="text-md ">{metadata.name}</h3>
+            <p className="opacity-50 text-sm">
+              {balance / 10 ** decimals} {metadata.symbol}
+            </p>
           </div>
         </div>
       </SheetTrigger>
       <SheetContent>
         <SheetTitle></SheetTitle>
         <div className="flex flex-col gap-2 justify-center items-center">
-          {imageSrc ? (
+          {imageSrc || metadata.image ? (
             <Avatar>
-              <AvatarImage src={imageSrc} alt={address} />
+              <AvatarImage src={metadata.image || imageSrc} alt={address} />
             </Avatar>
           ) : (
             <LocalAvatar
@@ -80,11 +98,9 @@ export default function TokenCard({
             />
           )}
           <div>
-            <h3 className="text-md text-center">
-              {address.length > 15 ? `${address.slice(0, 20)}...` : address}
-            </h3>
+            <h3 className="text-md text-center">{metadata.name}</h3>
             <p className="opacity-50 text-center text-sm">
-              {balance / 10 ** decimals}
+              {balance / 10 ** decimals} {metadata.symbol.slice(0, 10)}
             </p>
             <div className="flex my-2 justify-center gap-2">
               <Button
@@ -153,7 +169,6 @@ export default function TokenCard({
             }}
           />
         )}
-
         {action === "airdrop" && (
           <AirdropTokenForm
             toggleSheet={toggleSheet}
@@ -164,6 +179,16 @@ export default function TokenCard({
             }}
           />
         )}
+        {/* <div className="overflow-y-auto h-1/2">
+          {!action && (
+            <Each
+              of={transactions}
+              render={(item) =>
+                item ? <Transaction transactionData={item} /> : null
+              }
+            />
+          )}
+        </div> */}
       </SheetContent>
     </Sheet>
   );

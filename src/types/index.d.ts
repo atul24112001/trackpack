@@ -26,7 +26,13 @@ type Network = {
     senderSecretKey: string,
     amount: number
   ) => Promise<any>;
-  createNewToken: (senderSecretKey: string, decimals: number) => Promise<any>;
+  createNewToken: (
+    senderSecretKey: string,
+    decimals: number,
+    name: string,
+    symbol: string,
+    uri: string
+  ) => Promise<any>;
   transfer: (
     recipientPublicKey: string,
     amountInSmallestUnit: number,

@@ -35,9 +35,10 @@ export default function useNetwork() {
     ) {
       return null;
     }
-    const activeWallet = accounts[activeAccountId]?.wallets[
-      activeBlockchain
-    ].find((wallet) => wallet.publicKey === activeWalletPublicKey);
+    const activeWallet =
+      accounts[activeAccountId]?.wallets[activeBlockchain]?.find(
+        (wallet) => wallet.publicKey === activeWalletPublicKey
+      ) || null;
     return activeWallet;
   }, [accounts, activeAccountId, activeWalletPublicKey, activeBlockchain]);
 
