@@ -17,7 +17,7 @@ import { createCreateMetadataAccountV3Instruction } from "@metaplex-foundation/m
 let devnetConnection: Connection | null = null;
 let mainnetConnection: Connection | null = null;
 
-function getConnection() {
+function getConnection(): Connection {
   const network = localStorage.getItem("mode") || "mainnet";
   if (network === "mainnet") {
     if (!mainnetConnection) {
@@ -30,9 +30,9 @@ function getConnection() {
 
   if (!devnetConnection) {
     devnetConnection = new Connection(
-      "https://api.devnet.solana.com"
+      // "https://api.devnet.solana.com"
       // "http://127.0.0.1:8899"
-      // `https://solana-devnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
+      `https://solana-devnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
     );
   }
 
@@ -124,8 +124,8 @@ async function getTokens(walletAddress: string): Promise<Token[]> {
           .nfts()
           .findByMint({ mintAddress: mintAddress });
         metadata.image = token.json?.image;
-        metadata.name = token.json?.name || token.name;
-        metadata.symbol = token.json?.symbol || token.symbol;
+        metadata.name = token.name;
+        metadata.symbol = token.symbol;
       }
 
       return {
@@ -246,7 +246,7 @@ async function createNewToken(
   const _secret = new Uint8Array(Object.values(JSON.parse(senderSecretKey)));
   const wallet = Keypair.fromSecretKey(_secret);
   const mint = await TokenProgram.createMint(
-    getConnection(),
+    connection,
     wallet,
     wallet.publicKey,
     wallet.publicKey,
