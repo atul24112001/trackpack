@@ -30,7 +30,8 @@ function getConnection(): Connection {
 
   if (!devnetConnection) {
     devnetConnection = new Connection(
-      "https://api.devnet.solana.com"
+      localStorage.getItem("developers-network") ||
+        "https://api.devnet.solana.com"
       // "http://127.0.0.1:8899"
       // `https://solana-devnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
     );
